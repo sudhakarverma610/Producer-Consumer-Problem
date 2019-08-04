@@ -1,0 +1,160 @@
+﻿
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace Consumer_Problem
+{
+
+    class CNum
+    {
+
+        static int _num;
+        public int p = 1;
+        public int seq = 0;
+        public bool Flag1; public bool flag2;//, flag3, flag4;
+        public CNum()
+        {
+            _num = 0; Flag1 = true; flag2 = true;// flag3 = 0; flag4 = 0;
+        }
+        public void setNum(int i)
+        {
+            _num = i;
+        }
+        public int getNum()
+        {
+            return _num;
+        }
+    }
+    class GeneratNum
+    {
+        private CNum cnum;
+        private object common_lock;
+
+
+        public GeneratNum(CNum cnum, object common_lock)
+        {
+            // TODO: Complete member initialization
+            this.cnum = cnum;
+            this.common_lock = common_lock;
+        }
+
+        public void Generate()
+        {
+            for (int i = 1; i <= 11; i++)
+            {
+                    lock (common_lock)
+                    {
+
+                       // Console.Write("Produce Chnace ");
+                        //Console.Write(" f1=" + cnum.Flag1 + " f2=" + cnum.flag2 + " seq=" + cnum.seq + " p =" + cnum.p);
+                        if (cnum.p == 2 || cnum.p == 3|| !cnum.Flag1)
+                        {
+                       //     Console.Write(" producer wating ");
+                            Monitor.PulseAll(common_lock);
+                            Monitor.Wait(common_lock);
+                        }
+
+                        cnum.setNum(i);
+                        
+
+                        if (i == 11)
+                        {
+                            Console.ReadKey();
+                        }
+                        Console.Write("\n Produce " + i);
+                        cnum.Flag1 = false;
+                        cnum.p = 2;
+                    
+                }
+
+            }
+        }
+    }
+    class Consumer
+    {
+        private CNum cnum;
+        private object common_lock;
+
+        public Consumer(CNum cnum, object common_lock)
+        {
+            // TODO: Complete member initialization
+            this.cnum = cnum;
+            this.common_lock = common_lock;
+        }
+        public void Consume()
+        {
+            for (int i = 1; i <= 11; i++)
+            {
+                lock (common_lock)
+                {
+
+                    Console.Write("Consumer Chnace ");
+                   // Console.Write(" f1=" + cnum.Flag1 + " f2=" + cnum.flag2 + " seq=" + cnum.seq + " p =" + cnum.p);
+                    
+                    if (cnum.p == 3 || cnum.p == 4 ||cnum.p==1 || cnum.Flag1)
+                    {
+                       Console.Write(" Consumer wating ");
+                        Monitor.PulseAll(common_lock);
+                        Monitor.Wait(common_lock);
+                    }
+
+
+                    if (i == 11)
+                    {
+                        Console.ReadKey();
+                    }
+                    Console.Write("\t consume " +cnum.getNum());
+                    cnum.Flag1 = true;
+                    cnum.p = 1;
+                }
+  
+            }
+        }
+    }
+    class Consumer1
+    {
+        private CNum cnum;
+        private object common_lock;
+
+        public Consumer1(CNum cnum, object common_lock)
+        {
+            // TODO: Complete member initialization
+            this.cnum = cnum;
+            this.common_lock = common_lock;
+        }
+        public void Consume()
+        {
+            for (int i = 1; i <= 11; i++)
+            {
+                
+
+            }
+        }
+    }
+    class Program
+    {
+        public static void Main(string[] str)
+        {
+            CNum cnum = new CNum();
+            Object common_lock = new Object();
+            GeneratNum genrate = new GeneratNum(cnum, common_lock);
+            Consumer consum = new Consumer(cnum, common_lock);
+
+            Consumer1 consum1 = new Consumer1(cnum, common_lock);
+            Thread t1 = new Thread(genrate.Generate);
+            Thread t2 = new Thread(consum.Consume);
+            Thread t3 = new Thread(consum1.Consume);
+            t2.Start(); Thread.Sleep(1000);
+            t1.Start();
+            //t3.Start();
+
+            Console.ReadKey();
+        }
+    }
+
+}

@@ -1,0 +1,208 @@
+﻿
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+
+namespace Consumer_Problem
+{
+
+    class CNum
+    {
+
+        static int _num;
+        public int p = 1;
+        public int seq = 0;
+        public bool Flag1; public bool flag2;//, flag3, flag4;
+        public CNum()
+        {
+            _num = 0; Flag1 = true; flag2 = true;// flag3 = 0; flag4 = 0;
+        }
+        public void setNum(int i)
+        {
+            lock (this)
+            {
+                if (Flag1 == true && flag2 == true && seq == 0)//
+                {
+                    _num = i;
+                 //   return _num;
+
+                }
+                else
+                {
+                    Monitor.PulseAll(this);
+                    Monitor.Wait(this);
+                }
+               // return _num;
+            }
+
+        }
+        public int getNum()
+        {
+            lock (this)
+            {
+                int flag = 0;
+                if (Flag1 == false && flag2 == true && seq == 0)//true;
+                {
+                    flag = 1;
+                }
+                else if (Flag1 == false && flag2 == false && seq == 2)
+                {
+                    flag = 1;
+                }
+                if(flag==0)
+                {
+                    Monitor.PulseAll(this);
+                    Monitor.Wait(this);
+                   
+                }
+                return _num;
+            }
+        }
+    }
+    class GeneratNum
+    {
+        private CNum cnum;
+        private object common_lock;
+       
+
+        public GeneratNum(CNum cnum, object common_lock)
+        {
+            // TODO: Complete member initialization
+            this.cnum = cnum;
+            this.common_lock = common_lock;
+        }
+
+        public void Generate() {
+            for (int i = 1; i <= 11; i++)
+            {
+                if (cnum.p == 1 || cnum.p == 4||cnum.p==2) {
+                    lock (common_lock)
+                    {
+
+                        Console.Write("Produce Chnace ");
+                        Console.Write(" f1=" + cnum.Flag1 + " f2=" + cnum.flag2 + " seq=" + cnum.seq+" p ="+cnum.p);
+                        cnum.setNum(i);
+                        if (cnum.p == 2 || cnum.p == 3)
+                        {
+                            Console.Write(" producer wating ");
+                            Monitor.Wait(common_lock);
+                        }
+
+                        
+                        if (i == 11)
+                        {
+                            Console.ReadKey();
+                        }
+                        Console.Write("\n Produce " + i);
+                        cnum.Flag1 = false;
+                        cnum.p = 2;
+                    }
+                }
+                
+            }
+        }
+    }
+    class Consumer
+    {
+        private CNum cnum;
+        private object common_lock;
+        
+        public Consumer(CNum cnum, object common_lock)
+        {
+            // TODO: Complete member initialization
+            this.cnum = cnum;
+            this.common_lock = common_lock;
+        }
+        public void Consume()
+        {
+            for (int i = 1; i <= 11; i++)
+            {
+                if (cnum.p == 2||cnum.p==3)
+                {
+                    lock (common_lock)
+                    {
+
+                        Console.Write("Consume0 Chnace f1=" + cnum.Flag1 + " f2=" + cnum.flag2 + " seq=" + cnum.seq + " p =" + cnum.p);
+                        if (cnum.p == 3)
+                        {
+                            Console.Write(" consumer10 waiting ");
+                            Monitor.Wait(common_lock);
+                        }
+                        Console.Write(" Consume0 " + (cnum.getNum()));
+                        cnum.flag2 = false;
+                        cnum.seq = 1;
+                        cnum.p = 3;
+                    }
+                }
+               
+            }
+        }
+    }
+    class Consumer1
+    {
+        private CNum cnum;
+        private object common_lock;
+        
+        public Consumer1(CNum cnum, object common_lock)
+        {
+            // TODO: Complete member initialization
+            this.cnum = cnum;
+            this.common_lock = common_lock;
+        }
+        public void Consume()
+        {
+            for (int i = 1; i <= 11; i++)
+            {
+                if (cnum.p == 3 || cnum.p == 4)
+                {
+                    lock (common_lock)
+                    {
+
+                        Console.Write(" consume1 chnace  f1=" + cnum.Flag1 + " f2=" + cnum.flag2 + " seq=" + cnum.seq + " p =" + cnum.p);
+
+                        cnum.seq = 2;
+                        if (cnum.p == 4)
+                        {
+                            Monitor.PulseAll(common_lock);
+                            Console.Write(" consumer1 waiting ");
+
+                            Monitor.Wait(common_lock);
+                        }
+                        Console.Write(" Consume1 " + cnum.getNum() + "seq=" + cnum.seq);
+
+                        cnum.Flag1 = true;
+                        cnum.flag2 = true;
+                        cnum.seq = 0;
+                        cnum.p = 4;
+                    }
+                }
+               
+            }
+        }
+    }
+    class Program
+    {
+        public static void Main(string[] str)
+        {
+            CNum cnum = new CNum();
+            Object common_lock = new Object();
+            GeneratNum genrate = new GeneratNum(cnum, common_lock);
+            Consumer consum = new Consumer(cnum,common_lock);
+
+            Consumer1 consum1 = new Consumer1(cnum,common_lock);
+            Thread t1 = new Thread(genrate.Generate);
+            Thread t2 = new Thread(consum.Consume);
+            Thread t3 = new Thread(consum1.Consume);
+            t1.Start();// Thread.Sleep(1000);
+            t2.Start();
+            t3.Start();
+
+            Console.ReadKey();
+        }
+    }
+    
+}
